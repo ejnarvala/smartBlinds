@@ -4,7 +4,7 @@
 #import ctypes
 from ctypes import *
 import time
-path = "../lib/liblsm9ds1cwrapper.so"
+path = "./lib/liblsm9ds1cwrapper.so"
 lib = cdll.LoadLibrary(path)
 
 lib.lsm9ds1_create.argtypes = []
