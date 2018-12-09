@@ -1,6 +1,11 @@
 from flask import Flask, request, render_template, abort, jsonify, make_response
 from imu import *
 import time
+import RPi.GPIO as GPIO, time, os      
+ 
+DEBUG = 1
+GPIO.setmode(GPIO.BCM)
+
 app = Flask(__name__)
 
 
@@ -20,14 +25,24 @@ def index():
 
 
 
-def getPhotoVal():
+def getPhotoVal(RCpin):
     #TODO: read the photoresistor and return its value
-    return 951
+    reading = 0
+    GPIO.setup(RCpin, GPIO.OUT)
+    GPIO.output(RCpin, GPIO.LOW)
+    time.sleep(0.1)
+ 
+    GPIO.setup(RCpin, GPIO.IN)
+    # This takes about 1 millisecond per loop cycle
+    while (GPIO.input(RCpin) == GPIO.LOW):
+            reading += 1
+    return reading
+    #return 951
 
 
 def updateLight():
     global light
-    rawPhotoVal = getPhotoVal()
+    rawPhotoVal = getPhotoVal(18)
     if(rawPhotoVal):
         light = rawPhotoVal
 
@@ -77,6 +92,8 @@ if __name__ == '__main__':
     #     quit()
     # lib.lsm9ds1_calibrate(imu)
     # print("IMU Calibrated.")
+
+    # RCtime(18) provides the reading, higher numbers correspond to darker
 
     #TODO: write a function to open then close the blinds upon startup to
     # set the 0 and 100% values in relation to the accelerometer tilt
