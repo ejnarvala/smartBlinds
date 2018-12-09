@@ -1,43 +1,84 @@
-from flask import Flask
+from flask import Flask, request, render_template, abort, jsonify, make_response
 from imu import *
+import time
 app = Flask(__name__)
-@app.route('/')
+
+
+
+
+@app.route('/', methods=['GET', 'POST'])
 def index():
-    if(lib.lsm9ds1_gyroAvailable(imu) == 0):
-        return 'IMU Unavailable'
-    else:
-        lib.lsm9ds1_readGyro(imu)
-        gx = lib.lsm9ds1_getGyroX(imu)
-        gy = lib.lsm9ds1_getGyroY(imu)
-        gz = lib.lsm9ds1_getGyroZ(imu)
+    if(request.method == 'POST'):
+        print(request.form)
+        tilt = request.form['tilt']
+        openTime = request.form['openTime']
+        closeTime = request.form['closeTime']
 
-        cgx = lib.lsm9ds1_calcGyro(imu, gx)
-        cgy = lib.lsm9ds1_calcGyro(imu, gy)
-        cgz = lib.lsm9ds1_calcGyro(imu, gz)
-        return 'X: ' + str(cgx) + ',Y: ' + str(cgy) + ',Z: ' + str(cgz)
+    return render_template('index.html', data={'light': light, 'tilt': tilt, 'openTime': openTime, 'closeTime': closeTime})
 
-if __name__ == '__main__':
-    lib = startIMU()
-    imu = lib.lsm9ds1_create()
-    lib.lsm9ds1_begin(imu)
-    if lib.lsm9ds1_begin(imu) == 0:
-        print("Failed to communicate with LSM9DS1.")
-        quit()
-    lib.lsm9ds1_calibrate(imu)
 
-    # while True:
-    #     while lib.lsm9ds1_gyroAvailable(imu) == 0:
-    #         pass
+
+def getPhotoVal():
+    return 951
+
+
+def updateLight():
+    global light
+    rawPhotoVal = getPhotoVal()
+    if(rawPhotoVal):
+        light = rawPhotoVal
+
+
+#spins the motor until blinds are at the provided percent
+def setBlindTilt(percent):
+    #TODO integrate motor to tilt blinds to this percent
+    #spin motor until accelerometer reaches desired val
+    return False
+
+
+
+#returns the raw accelerometer values
+def getAccelVals():
+    return (1, 2, 3)
+    # if(lib.lsm9ds1_gyroAvailable(imu) == 0):
+    #     return False
+    # else:
     #     lib.lsm9ds1_readGyro(imu)
+    #     ax = lib.lsm9ds1_getAccelX(imu)
+    #     ay = lib.lsm9ds1_getAccelY(imu)
+    #     az = lib.lsm9ds1_getAccelZ(imu)
 
-    #     gx = lib.lsm9ds1_getGyroX(imu)
-    #     gy = lib.lsm9ds1_getGyroY(imu)
-    #     gz = lib.lsm9ds1_getGyroZ(imu)
-
-    #     cgx = lib.lsm9ds1_calcGyro(imu, gx)
-    #     cgy = lib.lsm9ds1_calcGyro(imu, gy)
-    #     cgz = lib.lsm9ds1_calcGyro(imu, gz)
+    #     cax = lib.lsm9ds1_calcAccel(imu, ax)
+    #     cay = lib.lsm9ds1_calcAccel(imu, ay)
+    #     caz = lib.lsm9ds1_calcAccel(imu, az)
+    #     return (cax, cay, caz)
 
 
-        # print("Gyro: %f, %f, %f [deg/s]" % (cgx, cgy, cgz))
-    app.run(debug=True, host='0.0.0.0', port=80)
+def updateTilt():
+    global tilt
+    rawVals = getAccelVals()
+    if(rawVals):
+        tilt = rawVals[0]
+
+
+
+#initializations
+if __name__ == '__main__':
+    global openTime
+    global closeTime
+    # lib = startIMU()
+    # imu = lib.lsm9ds1_create()
+    # lib.lsm9ds1_begin(imu)
+    # if lib.lsm9ds1_begin(imu) == 0:
+    #     print("Failed to communicate with LSM9DS1.")
+    #     quit()
+    # lib.lsm9ds1_calibrate(imu)
+    # print("IMU Calibrated.")
+
+    #TODO: write a function to open then close the blinds upon startup to
+    # set the 0 and 100% values in relation to the accelerometer tilt
+    updateLight()
+    updateTilt()
+    openTime = '06:30'
+    closeTime = '21:30'
+    app.run(debug=True)

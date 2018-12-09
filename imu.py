@@ -1,5 +1,6 @@
+from ctypes import *
+
 def startIMU():
-    from ctypes import *
     path = "./lib/liblsm9ds1cwrapper.so"
     lib = cdll.LoadLibrary(path)
 
