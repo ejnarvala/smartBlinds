@@ -13,12 +13,15 @@ def index():
         tilt = request.form['tilt']
         openTime = request.form['openTime']
         closeTime = request.form['closeTime']
+        #TODO: implement/modify something to apply the changes
+
 
     return render_template('index.html', data={'light': light, 'tilt': tilt, 'openTime': openTime, 'closeTime': closeTime})
 
 
 
 def getPhotoVal():
+    #TODO: read the photoresistor and return its value
     return 951
 
 
