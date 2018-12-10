@@ -13,15 +13,27 @@ app = Flask(__name__)
 def index():
     return render_template('index.html')
 
+@app.route('/api/raw/tilt')
+def testTilt():
+    return str(getAccelVals())
 
+@app.route('/api/raw/light')
+def testLight():
+    return str(getPhotoVal(18))
 
 @app.route('/api/data')
 def api_data():
+    global light
+    global tilt
+    global openTime
+    global closeTime
+    updateLight()
+    updateTilt()
     data = {
         'light': light,
         'tilt': tilt,
         'openTime': openTime,
-        'closeTime': closeTime
+        'closeTime': closeTime,
         'busy': True
     }
     return jsonify(data)
@@ -32,7 +44,7 @@ def getPhotoVal(RCpin):
     reading = 0
     GPIO.setup(RCpin, GPIO.OUT)
     GPIO.output(RCpin, GPIO.LOW)
-    time.sleep(0.1)
+    #time.sleep(0.1)
  
     GPIO.setup(RCpin, GPIO.IN)
     # This takes about 1 millisecond per loop cycle
@@ -43,10 +55,11 @@ def getPhotoVal(RCpin):
 
 
 def updateLight():
+# TODO: add failcount for disconnects
     global light
-    rawPhotoVal = getPhotoVal(18)
-    if(rawPhotoVal):
-        light = rawPhotoVal
+    rawPhotoVal = getPhotoVal(LIGHT_PIN)
+    #if(rawPhotoVal):
+    light = rawPhotoVal
 
 
 #spins the motor until blinds are at the provided percent
@@ -59,26 +72,25 @@ def setBlindTilt(percent):
 
 #returns the raw accelerometer values
 def getAccelVals():
-    return (1, 2, 3)
-    # if(lib.lsm9ds1_gyroAvailable(imu) == 0):
-    #     return False
-    # else:
-    #     lib.lsm9ds1_readGyro(imu)
-    #     ax = lib.lsm9ds1_getAccelX(imu)
-    #     ay = lib.lsm9ds1_getAccelY(imu)
-    #     az = lib.lsm9ds1_getAccelZ(imu)
+    if(lib.lsm9ds1_gyroAvailable(imu) == 0):
+        return False
+    else:
+        lib.lsm9ds1_readAccel(imu)
+        ax = lib.lsm9ds1_getAccelX(imu)
+        ay = lib.lsm9ds1_getAccelY(imu)
+        az = lib.lsm9ds1_getAccelZ(imu)
 
-    #     cax = lib.lsm9ds1_calcAccel(imu, ax)
-    #     cay = lib.lsm9ds1_calcAccel(imu, ay)
-    #     caz = lib.lsm9ds1_calcAccel(imu, az)
-    #     return (cax, cay, caz)
+        cax = lib.lsm9ds1_calcAccel(imu, ax)
+        cay = lib.lsm9ds1_calcAccel(imu, ay)
+        caz = lib.lsm9ds1_calcAccel(imu, az)
+        return (cax, cay, caz)
 
 
 def updateTilt():
     global tilt
     rawVals = getAccelVals()
     if(rawVals):
-        tilt = rawVals[0]
+        tilt = rawVals[1]
 
 
 
@@ -86,21 +98,26 @@ def updateTilt():
 if __name__ == '__main__':
     global openTime
     global closeTime
-    # lib = startIMU()
-    # imu = lib.lsm9ds1_create()
-    # lib.lsm9ds1_begin(imu)
-    # if lib.lsm9ds1_begin(imu) == 0:
-    #     print("Failed to communicate with LSM9DS1.")
-    #     quit()
-    # lib.lsm9ds1_calibrate(imu)
-    # print("IMU Calibrated.")
-
+    global light
+    global LIGHT_PIN
+    LIGHT_PIN = 18
+    lib = startIMU()
+    imu = lib.lsm9ds1_create()
+    lib.lsm9ds1_begin(imu)
+    if lib.lsm9ds1_begin(imu) == 0:
+        print("Failed to communicate with LSM9DS1.")
+        quit()
+    print("Calibrating IMU")
+    lib.lsm9ds1_calibrate(imu)
+    print("IMU Calibrated.")
+    print("Checking light sensor")
+    light = getPhotoVal(LIGHT_PIN)
+    print("Photoresistor value:", light)
     # RCtime(18) provides the reading, higher numbers correspond to darker
-
     #TODO: write a function to open then close the blinds upon startup to
     # set the 0 and 100% values in relation to the accelerometer tilt
     updateLight()
     updateTilt()
     openTime = '06:30'
     closeTime = '21:30'
-    app.run(debug=True)
+    app.run(debug=True, port=80, host='0.0.0.0')
