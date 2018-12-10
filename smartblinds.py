@@ -9,20 +9,22 @@ GPIO.setmode(GPIO.BCM)
 app = Flask(__name__)
 
 
-
-
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    if(request.method == 'POST'):
-        print(request.form)
-        tilt = request.form['tilt']
-        openTime = request.form['openTime']
-        closeTime = request.form['closeTime']
-        #TODO: implement/modify something to apply the changes
+    return render_template('index.html')
 
 
-    return render_template('index.html', data={'light': light, 'tilt': tilt, 'openTime': openTime, 'closeTime': closeTime})
 
+@app.route('/api/data')
+def api_data():
+    data = {
+        'light': light,
+        'tilt': tilt,
+        'openTime': openTime,
+        'closeTime': closeTime
+        'busy': True
+    }
+    return jsonify(data)
 
 
 def getPhotoVal(RCpin):
