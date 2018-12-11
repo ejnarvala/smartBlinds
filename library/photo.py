@@ -6,7 +6,7 @@ class PhotoResistor:
 		GPIO.setmode(GPIO.BCM)
 
 
-	def getPhotoVal():
+	def getPhotoVal(self):
 	    RCpin = self.pin_num
 	    reading = 0
 	    GPIO.setup(RCpin, GPIO.OUT)
