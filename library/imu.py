@@ -57,9 +57,9 @@ class IMU:
         self.lib.lsm9ds1_calcMag.restype = c_float
 
     def startCalibrateIMU(self):
-        self.imu = lib.lsm9ds1_create()
+        self.imu = self.lib.lsm9ds1_create()
         self.lib.lsm9ds1_begin(self.imu)
-        if lib.lsm9ds1_begin(self.imu) == 0:
+        if self.lib.lsm9ds1_begin(self.imu) == 0:
             print("Failed to communicate with LSM9DS1.")
             quit()
         print("Calibrating IMU, make sure it is horizontal")
