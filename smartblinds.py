@@ -1,14 +1,14 @@
 from flask import Flask, request, render_template, abort, jsonify, make_response
-from imu import *
+from library.imu import IMU
+from library.photo import PhotoResistor
+from library.motor import Motor
 import time
-import RPi.GPIO as GPIO
-
-#GPIO.setmode(GPIO.BCM)
+from collections import deque
 
 app = Flask(__name__)
 
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/')
 def index():
     return render_template('index.html')
 
@@ -22,10 +22,6 @@ def testLight():
 
 @app.route('/api/data')
 def api_data():
-    global light
-    global tilt
-    global openTime
-    global closeTime
     updateLight()
     updateTilt()
     data = {
@@ -33,65 +29,46 @@ def api_data():
         'tilt': tilt,
         'openTime': openTime,
         'closeTime': closeTime,
-        'busy': True
+        'busy': busy
     }
     return jsonify(data)
 
 
-def getPhotoVal(RCpin):
-    #TODO: read the photoresistor and return its value
-    reading = 0
-    GPIO.setup(RCpin, GPIO.OUT)
-    GPIO.output(RCpin, GPIO.LOW)
-    time.sleep(0.1)
- 
-    GPIO.setup(RCpin, GPIO.IN)
-    # This takes about 1 millisecond per loop cycle
-    print('starting reading...')
-    while (GPIO.input(RCpin) == GPIO.LOW):
-            reading += 1
-    return reading
-    #return 951
-
-
 def updateLight():
-# TODO: add failcount for disconnects
-    global light
-    rawPhotoVal = getPhotoVal(LIGHT_PIN)
-    #if(rawPhotoVal):
-    light = rawPhotoVal
+    rawPhotoVal = photoRes.getPhotoVal()
+    if(rawPhotoVal == False):
+        light = 'N/A'
+    else:
+        light = rawPhotoVal
 
 
 #spins the motor until blinds are at the provided percent
-def setBlindTilt(percent):
-    #TODO integrate motor to tilt blinds to this percent
-    #spin motor until accelerometer reaches desired val
-    return False
-
-
-
-#returns the raw accelerometer values
-def getAccelVals():
-    if(lib.lsm9ds1_gyroAvailable(imu) == 0):
-        return False
+def setBlindTilt(percentTilt):
+    delta = tolerance + 1
+    updateTilt()
+    busy = True
+    if(percentTilt < tilt):
+        motor.startForward()
     else:
-        lib.lsm9ds1_readAccel(imu)
-        ax = lib.lsm9ds1_getAccelX(imu)
-        ay = lib.lsm9ds1_getAccelY(imu)
-        az = lib.lsm9ds1_getAccelZ(imu)
+        motor.startReverse()
 
-        cax = lib.lsm9ds1_calcAccel(imu, ax)
-        cay = lib.lsm9ds1_calcAccel(imu, ay)
-        caz = lib.lsm9ds1_calcAccel(imu, az)
-        return (cax, cay, caz)
+    avgTilt = tilt
+    while(delta > tiltTolerance):
+        updateTilt()
+        tiltBuffer.append(tilt)
+        avgTilt = sum(tiltBuffer, 0.0) / bufferSize
+        delta = percentTilt - avgTilt #stop once average Tilt and desired tilt are within tolerecne
+    motor.stop()
+    busy = False
+
 
 
 def updateTilt():
-    global tilt
-    rawVals = getAccelVals()
-    if(rawVals):
-        tilt = rawVals[1]
-
+    rawVals = imu.getAccelVals()
+    if(rawVals == False):
+        tilt = 'N/A'
+    else:
+        tilt = round(rawVals[1], 2)*100
 
 
 #initializations
@@ -99,32 +76,89 @@ if __name__ == '__main__':
     global openTime
     global closeTime
     global light
-    global LIGHT_PIN
+    global imu
+    global tilt
+    global photoRes
+    global motor
+    global busy
+    global tiltMax
+    global tiltMin
+    global tiltTolerance
+    global tiltBuffer
+    global bufferSize
 
-    #initialize light
+    # INIT SETTINGS
     LIGHT_PIN = 18
-    GPIO.setmode(GPIO.BOARD)
-
-    #initialize imu
-    lib = startIMU()
-    imu = lib.lsm9ds1_create()
-    lib.lsm9ds1_begin(imu)
-    if lib.lsm9ds1_begin(imu) == 0:
-        print("Failed to communicate with LSM9DS1.")
-        quit()
-    print("Calibrating IMU")
-    lib.lsm9ds1_calibrate(imu)
-    print("IMU Calibrated.")
+    AIN1_PIN = 26
+    AIN2_PIN = 29
+    PWMA_PIN = 12
+    STBY_PIN = 13
 
 
-    print("Checking light sensor")
-    light = getPhotoVal(LIGHT_PIN)
-    print("Photoresistor value:", light)
-    # RCtime(18) provides the reading, higher numbers correspond to darker
-    #TODO: write a function to open then close the blinds upon startup to
-    # set the 0 and 100% values in relation to the accelerometer tilt
-    updateLight()
-    updateTilt()
+    # Set Defaults
     openTime = '06:30'
     closeTime = '21:30'
+    busy = False
+    bufferSize = 5
+    calibrationTolerance = 5 #tolerence for counting as the same percent
+    tiltTolerance = 5 #percent tolerance for tilting to a percent
+
+    #initialize photoresistor
+    photoRes = PhotoResistor(LIGHT_PIN)
+    print("Checking light sensor")
+    updateLight()
+    print("Photoresistor value:", light)
+
+
+    # initialize IMU
+    imu = IMU()
+    imu.startCalibrateIMU()
+    print("Checking Accelerometer")
+    updateTilt()
+    print("Accelerometer Y value:", tilt)
+
+
+    motor = Motor(AIN1_PIN, AIN2_PIN, PWMA_PIN, STBY_PIN)
+    print("Calibrating Motor")
+    delta = tolerance + 1
+    tiltBuffer = deque(maxlen=bufferSize)
+
+    #initialize buffer
+    for i in range(bufferSize):
+        updateTilt()
+        tiltBuffer.append(tilt)
+    cur_avg = sum(tiltBuffer,0.0) / bufferSize
+
+
+    print("Average Tilt:", cur_avg)
+    # start in one direction find max val
+    print("Finding max tilt")
+    motor.startForward()
+    while(delta > calibrationTolerance):
+        updateTilt()
+        tiltBuffer.append(tilt)
+        old_avg = cur_avg
+        cur_avg = sum(tiltBuffer, 0.0) / bufferSize
+        delta = abs(cur_avg - old_avg)
+    motor.stop()
+
+    tiltMax = cur_avg
+    print("tilt max:", tiltMax)
+
+
+    #start in opposite direction
+    print("Finding min tilt")
+    motor.startReverse()
+    while(delta > calibrationTolerance):
+        updateTilt()
+        tiltBuffer.append(tilt)
+        old_avg = cur_avg
+        cur_avg = sum(tiltBuffer, 0.0) / bufferSize
+        delta = abs(cur_avg - old_avg)
+    motor.stop()
+
+    tiltMin = cur_avg
+    print("tilt min:", tiltMin)
+    print("Motor Calibration Finished.")
+
     app.run(debug=True, port=80, host='0.0.0.0')
