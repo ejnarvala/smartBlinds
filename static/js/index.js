@@ -6,8 +6,14 @@ function init(){
 	openTimeDOM = document.getElementById('openTime');
 	closeTimeDOM = document.getElementById('closeTime');
 	submitButtonDOM = document.getElementById('submit');
+	
+	tiltTarget = document.getElementById('tiltTarget');
+	openTimeTarget = document.getElementById('openTimeTarget');
+	closeTimeTarget = document.getElementById('closeTimeTarget');
 
-// poll server every second for status
+
+
+	// poll server every second for status
 	setInterval(function(){
 		console.log('fetching');
 		fetch('/api/data')
@@ -24,12 +30,24 @@ function init(){
 }
 
 
+function buttonClick(){
+	var payload = {
+		tiltTarget: tiltTarget.value,
+		openTimeTarget: openTimeTarget.value,
+		closeTimeTarget: closeTimeTarget.value
+		}
+	fetch('/api/target', {method: 'POST', body: JSON.stringify(payload)})
+		.then(res => res.json())
+		.then(response => console.log('Success:', JSON.stringify(response)))
+		.catch(error => console.log('Error:', error));
+}
+
 function updateVals(data){
 	console.log(data);
 	lightDOM.innerHTML = data.light;
-	tiltDOM.value = data.tilt;
-	openTimeDOM.value = data.openTime;
-	closeTimeDOM.value = data.closeTime;
+	tiltDOM.innerHTML = data.tilt;
+	openTimeDOM.innerHTML = data.openTime;
+	closeTimeDOM.innerHTML = data.closeTime;
 	if(data.busy){
 		submitButtonDOM.disabled = true;
 		submitButtonDOM.innerHTML = 'Busy';

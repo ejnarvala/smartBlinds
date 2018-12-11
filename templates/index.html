@@ -21,7 +21,8 @@
 						<tbody>
 							<tr>
 								<th>Tilt</th>
-								<td><input id="tilt" name="tilt" type="number" min="0" max="100" class="form-control"></td>
+								<td><p id="tilt"></p></td>
+								<td><input id="tiltTarget" type="number" min="0" max="100" class="form-control"></td>
 							</tr>
 							<tr>
 								<th>Light</th>
@@ -29,16 +30,18 @@
 							</tr>
 							<tr>
 								<th>Auto Close Time</th>
-								<td><input id="closeTime" name="closeTime" type="time" class="form-control"></td>
+								<td><p id="closeTime"></p></td>
+								<td><input id="closeTimeTarget" type="time" class="form-control"></td>
 							</tr>
 							<tr>
 								<th>Auto Open Time</th>
-								<td><input id="openTime" name="openTime" type="time" class="form-control"></td>
+								<td><p id="openTime"></p></td>
+								<td><input id="openTimeTarget"  type="time" class="form-control"></td>
 							</tr>					
 						</tbody>
 					</table>
 					<div class="container text-center">
-						<button type="submit" class="btn-lg btn-primary" id="submit">Submit</button>
+						<button onclick="buttonClick()" class="btn-lg btn-primary" id="submit">Submit</button>
 					</div>
 				<!-- </form> -->
 			</div>

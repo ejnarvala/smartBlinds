@@ -1,10 +1,9 @@
 from flask import Flask, request, render_template, abort, jsonify, make_response
 from imu import *
 import time
-import RPi.GPIO as GPIO, time, os      
- 
-DEBUG = 1
-GPIO.setmode(GPIO.BCM)
+import RPi.GPIO as GPIO
+
+#GPIO.setmode(GPIO.BCM)
 
 app = Flask(__name__)
 
@@ -44,10 +43,11 @@ def getPhotoVal(RCpin):
     reading = 0
     GPIO.setup(RCpin, GPIO.OUT)
     GPIO.output(RCpin, GPIO.LOW)
-    #time.sleep(0.1)
+    time.sleep(0.1)
  
     GPIO.setup(RCpin, GPIO.IN)
     # This takes about 1 millisecond per loop cycle
+    print('starting reading...')
     while (GPIO.input(RCpin) == GPIO.LOW):
             reading += 1
     return reading
@@ -100,7 +100,12 @@ if __name__ == '__main__':
     global closeTime
     global light
     global LIGHT_PIN
+
+    #initialize light
     LIGHT_PIN = 18
+    GPIO.setmode(GPIO.BOARD)
+
+    #initialize imu
     lib = startIMU()
     imu = lib.lsm9ds1_create()
     lib.lsm9ds1_begin(imu)
@@ -110,6 +115,8 @@ if __name__ == '__main__':
     print("Calibrating IMU")
     lib.lsm9ds1_calibrate(imu)
     print("IMU Calibrated.")
+
+
     print("Checking light sensor")
     light = getPhotoVal(LIGHT_PIN)
     print("Photoresistor value:", light)
