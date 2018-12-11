@@ -2,7 +2,7 @@ from ctypes import *
 
 class IMU:
     def __init__(self):
-        path = "./lib_imu/liblsm9ds1cwrapper.so"
+        path = ".library/lib_imu/liblsm9ds1cwrapper.so"
         self.lib = cdll.LoadLibrary(path)
 
         self.lib.lsm9ds1_create.argtypes = []
