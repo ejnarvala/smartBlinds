@@ -13,7 +13,7 @@ class Motor:
 		GPIO.setup(self.AIN2_PIN, GPIO.OUT)
 		GPIO.setup(self.PWMA_PIN, GPIO.OUT)
 		GPIO.setup(self.STBY_PIN, GPIO.OUT)
-
+		self.CONTROL = GPIO.PWM(self.PWMA_PIN, 100)
 	def setSpeed(speed):
 		self.speed = speed
 
@@ -22,18 +22,18 @@ class Motor:
 		GPIO.output(self.AIN2_PIN, GPIO.LOW) # Set AIN2
 
 		#TODO: change this to PWM for variable speed
-		GPIO.output(self.PWMA_PIN, GPIO.HIGH)
-
-		GPIO.output(self.STBY, GPIO.HIGH)
+		#GPIO.output(self.PWMA_PIN, GPIO.HIGH)
+		self.CONTROL.start(50)
+		GPIO.output(self.STBY_PIN, GPIO.HIGH)
 
 	def startReverse(self):
 		GPIO.output(self.AIN2_PIN, GPIO.HIGH) # Set AIN1
 		GPIO.output(self.AIN1_PIN, GPIO.LOW) # Set AIN2
 
 		#TODO: change this to PWM for variable speed
-		GPIO.output(self.PWMA_PIN, GPIO.HIGH)
-		
-		GPIO.output(self.STBY, GPIO.HIGH)
+		#GPIO.output(self.PWMA_PIN, GPIO.HIGH)
+		self.CONTROL.start(50)
+		GPIO.output(self.STBY_PIN, GPIO.HIGH)
 
 	def stop(self):
 		GPIO.output(self.STBY_PIN, GPIO.LOW) # Set STBY
@@ -41,4 +41,5 @@ class Motor:
 		GPIO.output(self.AIN2_PIN, GPIO.LOW) # Set AIN2
 
 		#change to PWM
-		GPIO.output(self.PWMA_PIN, GPIO.LOW) # Set PWMA
+		#GPIO.output(self.PWMA_PIN, GPIO.LOW) # Set PWMA
+		self.CONTROL.stop()
