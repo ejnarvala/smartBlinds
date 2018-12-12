@@ -50,12 +50,14 @@ def setBlindTilt(percentTilt):
     tiltTarget = (percentTilt/100.0)*tiltRange + tiltMin
     updateTilt()
     old_tilt = tilt
+    if(abs(tilt - tiltTarget) > tiltTolerance):
+        return
     busy = True
     if(tiltTarget < tilt):
         motor.startForward()
     else:
         motor.startReverse()
-    time.sleep(0.25)
+    time.sleep(1.5)
     updateTilt()
     while(abs(tilt - tiltTarget) > tiltTolerance):
         time.sleep(.1)
@@ -122,7 +124,7 @@ if __name__ == '__main__':
     print("Accelerometer Y value:", tilt)
 
 
-    motor = Motor(AIN1_PIN, AIN2_PIN, PWMA_PIN, STBY_PIN)
+    motor = Motor(AIN1_PIN, AIN2_PIN, PWMA_PIN, STBY_PIN, 65)
     print("Calibrating Motor")
     delta = calibrationTolerance + 1
     #tiltBuffer = deque(maxlen=bufferSize)
@@ -138,7 +140,7 @@ if __name__ == '__main__':
     # start in one direction find max val
     print("Finding min tilt")
     motor.startForward()
-    time.sleep(1) #wait 1 second
+    time.sleep(2) #wait 1 second
     updateTilt()
     while(abs(tilt - old_tilt) > calibrationTolerance):
         # print('old tilt:', old_tilt)
@@ -149,12 +151,15 @@ if __name__ == '__main__':
     motor.stop()
     tiltMin = tilt
     print("tilt min:", tiltMin)
-
+    old_tilt = tilt
     #start in opposite direction
-    print("Finding min tilt")
+    print("Finding max tilt")
+    #print(old_tilt, tilt)
     motor.startReverse()
-    time.sleep(1) #wait 1 second
+    print('starting reverse')
+    time.sleep(5) #wait 1 second
     updateTilt()
+    print(old_tilt, tilt)
     while(abs(tilt - old_tilt) > calibrationTolerance):
         # print('old tilt:', old_tilt)
         # print('tilt:', tilt)

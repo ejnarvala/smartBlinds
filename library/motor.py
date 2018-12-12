@@ -2,7 +2,7 @@ import RPi.GPIO as GPIO
 import time
 
 class Motor:
-	def __init__(self, AIN1, AIN2, PWMA, STBY, SPEED=1):
+	def __init__(self, AIN1, AIN2, PWMA, STBY, SPEED=50):
 		self.AIN1_PIN = AIN1
 		self.AIN2_PIN = AIN2
 		self.PWMA_PIN = PWMA
@@ -23,7 +23,7 @@ class Motor:
 
 		#TODO: change this to PWM for variable speed
 		#GPIO.output(self.PWMA_PIN, GPIO.HIGH)
-		self.CONTROL.start(50)
+		self.CONTROL.start(self.speed)
 		GPIO.output(self.STBY_PIN, GPIO.HIGH)
 
 	def startReverse(self):
@@ -32,7 +32,7 @@ class Motor:
 
 		#TODO: change this to PWM for variable speed
 		#GPIO.output(self.PWMA_PIN, GPIO.HIGH)
-		self.CONTROL.start(50)
+		self.CONTROL.start(self.speed)
 		GPIO.output(self.STBY_PIN, GPIO.HIGH)
 
 	def stop(self):
