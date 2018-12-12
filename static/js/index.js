@@ -57,12 +57,12 @@ function openBlinds(){
 			}
 		})
 		.catch(error => {
-			console.log("Error:", error);
+			console.log("Error:", error);	
 			unfreezeButtons();
 		})
 }
 
-function openBlinds(){
+function closeBlinds(){
 	freezeButtons()
 	fetch('/api/closeBlind')
 		.then(res =>res.json())
