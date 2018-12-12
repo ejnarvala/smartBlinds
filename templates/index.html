@@ -20,14 +20,27 @@
 	 				<table class="table">
 						<tbody>
 							<tr>
+								<th>Status</th>
+								<td><p id="status"></p></td>
+								<!-- <td><input id="tiltTarget" type="number" min="0" max="100" class="form-control"></td> -->
+							</tr>
+							<tr>
 								<th>Tilt</th>
 								<td><p id="tilt"></p></td>
-								<td><input id="tiltTarget" type="number" min="0" max="100" class="form-control"></td>
+								<!-- <td><input id="tiltTarget" type="number" min="0" max="100" class="form-control"></td> -->
 							</tr>
 							<tr>
 								<th>Light</th>
 								<td class="text-center"><p id="light"></p></td>
 							</tr>
+							<tr>
+								<td class="text-right"><button onclick="openBlinds()" class="btn btn-primary" id="openBlindsButton">Open Blinds</button></td>
+								<td><button onclick="closeBlinds()" class="btn btn-success" id="openBlindsButton">Close Blinds</button></td>
+							</tr>					
+						</tbody>
+					</table>
+					<table class="table">
+						<tbody>
 							<tr>
 								<th>Auto Close Time</th>
 								<td><p id="closeTime"></p></td>
@@ -37,7 +50,7 @@
 								<th>Auto Open Time</th>
 								<td><p id="openTime"></p></td>
 								<td><input id="openTimeTarget"  type="time" class="form-control"></td>
-							</tr>					
+							</tr>
 						</tbody>
 					</table>
 					<div class="container text-center">
