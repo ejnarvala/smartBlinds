@@ -5,6 +5,7 @@ from library.motor import Motor
 import time
 import datetime
 from collections import deque
+import threading
 
 app = Flask(__name__)
 
@@ -16,6 +17,16 @@ def index():
 @app.route('/api/raw/tilt')
 def testTilt():
     return str(getAccelVals())
+
+@app.route('/api/target', methods=['POST'])
+def updateTimes():
+    global openTime
+    global closeTime
+    payload = request.json
+    openTime = payload['openTimeTarget']
+    closeTime = payload['closeTimeTarget']
+    print('Open time updated to:', openTime)
+    print('Close time updated to:', closeTime)
 
 @app.route('/api/raw/light')
 def testLight():
@@ -147,23 +158,29 @@ def checkTime():
     global openTime
     global closeTime
     global hasBeenClocked
-    now = datetime.datetime.now()
-    currHour = int(now.hour)
-    currMinute = int(now.minute)
 
-    a = openTime.split(":")
-    b = closeTime.split(":")
-    openHour = int(a[0])
-    openMinute = int(a[1])
-    closeHour = int(b[0])
-    closeMinute = int(b[1])
 
-    if not hasBeenClocked and openHour == currHour and openMinute == currMinute:
-        hasBeenClocked = not hasBeenClocked
-        openBlind()
-    elif hasBeenClocked and closeHour == currHour and closeMinute == currMinute:
-        hasBeenClocked = not hasBeenClocked
-        closeBlind()
+    while(True):
+        now = datetime.datetime.now()
+        currHour = int(now.hour)
+        currMinute = int(now.minute)
+
+        a = openTime.split(":")
+        b = closeTime.split(":")
+        openHour = int(a[0])
+        openMinute = int(a[1])
+        closeHour = int(b[0])
+        closeMinute = int(b[1])
+
+        if not hasBeenClocked and openHour == currHour and openMinute == currMinute:
+            hasBeenClocked = not hasBeenClocked
+            openBlind()
+        elif hasBeenClocked and closeHour == currHour and closeMinute == currMinute:
+            hasBeenClocked = not hasBeenClocked
+            closeBlind()
+
+        time.sleep(30)
+
 
 
 #initializations
@@ -249,38 +266,9 @@ if __name__ == '__main__':
     motor.stop()
     tiltMin = tilt
     print("tilt min:", tiltMin)
-   # old_tilt = tilt
-    #start in opposite direction
-#    print("Finding max tilt")
-    #print(old_tilt, tilt)
-   # motor.startReverse()
-   # print('starting reverse')
- #   now = time.time()
-  #  motor.startReverse()
-   # time.sleep(3) #wait 1 second
-   # updateTilt()
-    #print(old_tilt, tilt)
-   # while(abs(tilt - old_tilt) > calibrationTolerance or ((time.time() - now) > 12)):
-        # print('old tilt:', old_tilt)
-    #    print('tilt:', tilt)
-     #   old_tilt = tilt
-      #  time.sleep(1)
-       # updateTilt()
-   # motor.stop()
-   # tiltMax = tilt
-    #setBlindTilt(50)
-   # print("tilt max:", tiltMax)
     print("Motor Calibration Finished.")
     print("Zero Tilt" + str(zeroTilt))
-    print('trying to set halfway')
-   # setBlindTilt(50)
-
-   # while True:
-   #     openBlind()
-   #     closeBlind()
-
-
-
-   # time.sleep(10000)
+    
+    threading.Thread(target=checkTime.start()
 
     app.run(port=80, host='0.0.0.0')
