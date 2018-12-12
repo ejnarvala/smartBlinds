@@ -45,7 +45,7 @@ function buttonClick(){
 
 function openBlinds(){
 	freezeButtons()
-	fetch('/api/openBlinds')
+	fetch('/api/openBlind')
 		.then(res =>res.json())
 		.then(response => {
 			if(response.success){
@@ -64,7 +64,7 @@ function openBlinds(){
 
 function openBlinds(){
 	freezeButtons()
-	fetch('/api/closeBlinds')
+	fetch('/api/closeBlind')
 		.then(res =>res.json())
 		.then(response => {
 			if(response.success){
