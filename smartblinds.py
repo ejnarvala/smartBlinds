@@ -197,6 +197,8 @@ if __name__ == '__main__':
     bufferSize = 5
     calibrationTolerance = 5 #tolerence for counting as the same percent
     tiltTolerance = 5 #percent tolerance for tilting to a percent
+    isOpen = False
+    isClosed = True
 
     #initialize photoresistor
     photoRes = PhotoResistor(LIGHT_PIN)
@@ -276,4 +278,4 @@ if __name__ == '__main__':
 
    # time.sleep(10000)
 
-    app.run(debug=True, port=80, host='0.0.0.0')
+    app.run(port=80, host='0.0.0.0')
