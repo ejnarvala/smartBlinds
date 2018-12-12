@@ -48,8 +48,8 @@ def api_data():
         'openTime': openTime,
         'closeTime': closeTime,
         'busy': busy,
-        'isOpen': isOpen,
-        'isClosed': isClosed
+        'isOpen': isOpen
+    #    'isClosed': isClosed
     }
     return jsonify(data)
 
@@ -100,42 +100,47 @@ def updateTilt():
 def openBlind():
     global tilt
     global isOpen
-    global isClosed
+#    global isClosed
     if (tilt > zeroTilt):
         print("starting forward")
         motor.startForward()
-        while abs(tilt - zeroTilt) > calibrationTolerance:
+       # while abs(tilt - zeroTilt) > calibrationTolerance:
+        while tilt > zeroTilt:
             print("Tilt " + str(tilt))
             updateTilt()
     elif (tilt < zeroTilt):
         print("starting reverse")
         motor.startReverse()
-        while abs(tilt - zeroTilt) > calibrationTolerance:
+#        while abs(tilt - zeroTilt) > calibrationTolerance:
+        while tilt < zeroTilt:
             print("Tilt " + str(tilt))
             updateTilt()
-
-    isClosed = False
+    motor.stop()
+   # isClosed = False
     isOpen = True
 
 
 def closeBlind():
     global tilt
+    global isOpen
     if (tilt < tiltMin):
         print("starting reverse")
         motor.startReverse()
-        while abs(tilt - tiltMin) > calibrationTolerance:
+       # while abs(tilt - tiltMin) > calibrationTolerance:
+        while tilt < tiltMin:
             print("Tilt " + str(tilt))
             updateTilt()
 
     elif (tilt > tiltMin):
         print("starting forward")
         motor.startForward()
-        while abs(tilt - tiltMin) > calibrationTolerance:
+        while tilt > tiltMin:
+#        while abs(tilt - tiltMin) > calibrationTolerance:
             print("Tilt " + str(tilt))
             updateTilt()
-
+    motor.stop()
     isOpen = False
-    isClosed = True
+  #  isClosed = True
 
 
 def checkTime():
@@ -154,7 +159,7 @@ def checkTime():
     closeMinute = int(b[1])
 
     if not hasBeenClocked and openHour == currHour and openMinute == currMinute:
-        hasBeenClocked = not hasBeenClocked  
+        hasBeenClocked = not hasBeenClocked
         openBlind()
     elif hasBeenClocked and closeHour == currHour and closeMinute == currMinute:
         hasBeenClocked = not hasBeenClocked
@@ -178,7 +183,7 @@ if __name__ == '__main__':
     global bufferSize
     global zeroTilt
     global isOpen
-    global isClosed
+   # global isClosed
     global hasBeenClocked
 
     # INIT SETTINGS
@@ -198,7 +203,7 @@ if __name__ == '__main__':
     calibrationTolerance = 5 #tolerence for counting as the same percent
     tiltTolerance = 5 #percent tolerance for tilting to a percent
     isOpen = False
-    isClosed = True
+   # isClosed = True
 
     #initialize photoresistor
     photoRes = PhotoResistor(LIGHT_PIN)
