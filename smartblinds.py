@@ -3,6 +3,7 @@ from library.imu import IMU
 from library.photo import PhotoResistor
 from library.motor import Motor
 import time
+import datetime
 from collections import deque
 
 app = Flask(__name__)
@@ -20,6 +21,22 @@ def testTilt():
 def testLight():
     return str(getPhotoVal(18))
 
+@app.route('/api/openBlind')
+def api_openBlind():
+    try:
+        openBlind()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/closeBlind')
+def api_closeBlind():
+    try:
+        closeBlind()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
 @app.route('/api/data')
 def api_data():
 
@@ -30,7 +47,9 @@ def api_data():
         'tilt': tilt,
         'openTime': openTime,
         'closeTime': closeTime,
-        'busy': busy
+        'busy': busy,
+        'isOpen': isOpen,
+        'isClosed': isClosed
     }
     return jsonify(data)
 
@@ -53,7 +72,7 @@ def setBlindTilt(percentTilt):
     if(abs(tilt - tiltTarget) > tiltTolerance):
         return
     busy = True
-    if(tiltTarget < tilt):
+    if(tiltTarget > tilt):
         motor.startForward()
     else:
         motor.startReverse()
@@ -77,6 +96,71 @@ def updateTilt():
         tilt = round(rawVals[1], 2)*100
 
 
+
+def openBlind():
+    global tilt
+    global isOpen
+    global isClosed
+    if (tilt > zeroTilt):
+        print("starting forward")
+        motor.startForward()
+        while abs(tilt - zeroTilt) > calibrationTolerance:
+            print("Tilt " + str(tilt))
+            updateTilt()
+    elif (tilt < zeroTilt):
+        print("starting reverse")
+        motor.startReverse()
+        while abs(tilt - zeroTilt) > calibrationTolerance:
+            print("Tilt " + str(tilt))
+            updateTilt()
+
+    isClosed = False
+    isOpen = True
+
+
+def closeBlind():
+    global tilt
+    if (tilt < tiltMin):
+        print("starting reverse")
+        motor.startReverse()
+        while abs(tilt - tiltMin) > calibrationTolerance:
+            print("Tilt " + str(tilt))
+            updateTilt()
+
+    elif (tilt > tiltMin):
+        print("starting forward")
+        motor.startForward()
+        while abs(tilt - tiltMin) > calibrationTolerance:
+            print("Tilt " + str(tilt))
+            updateTilt()
+
+    isOpen = False
+    isClosed = True
+
+
+def checkTime():
+    global openTime
+    global closeTime
+    global hasBeenClocked
+    now = datetime.datetime.now()
+    currHour = int(now.hour)
+    currMinute = int(now.minute)
+
+    a = openTime.split(":")
+    b = closeTime.split(":")
+    openHour = int(a[0])
+    openMinute = int(a[1])
+    closeHour = int(b[0])
+    closeMinute = int(b[1])
+
+    if not hasBeenClocked and openHour == currHour and openMinute == currMinute:
+        hasBeenClocked = not hasBeenClocked  
+        openBlind()
+    elif hasBeenClocked and closeHour == currHour and closeMinute == currMinute:
+        hasBeenClocked = not hasBeenClocked
+        closeBlind()
+
+
 #initializations
 if __name__ == '__main__':
     global openTime
@@ -92,11 +176,15 @@ if __name__ == '__main__':
     global tiltTolerance
     global tiltBuffer
     global bufferSize
+    global zeroTilt
+    global isOpen
+    global isClosed
+    global hasBeenClocked
 
     # INIT SETTINGS
     LIGHT_PIN = 18
     AIN1_PIN = 26
-    AIN2_PIN = 29
+    AIN2_PIN = 19
     PWMA_PIN = 12
     STBY_PIN = 13
 
@@ -104,9 +192,10 @@ if __name__ == '__main__':
     # Set Defaults
     openTime = '06:30'
     closeTime = '21:30'
+    hasBeenClocked = False
     busy = False
     bufferSize = 5
-    calibrationTolerance = 4 #tolerence for counting as the same percent
+    calibrationTolerance = 5 #tolerence for counting as the same percent
     tiltTolerance = 5 #percent tolerance for tilting to a percent
 
     #initialize photoresistor
@@ -124,9 +213,9 @@ if __name__ == '__main__':
     print("Accelerometer Y value:", tilt)
 
 
-    motor = Motor(AIN1_PIN, AIN2_PIN, PWMA_PIN, STBY_PIN, 65)
+    motor = Motor(AIN1_PIN, AIN2_PIN, PWMA_PIN, STBY_PIN, 55)
     print("Calibrating Motor")
-    delta = calibrationTolerance + 1
+    #delta = calibrationTolerance + 1
     #tiltBuffer = deque(maxlen=bufferSize)
 
     #initialize buffer
@@ -136,42 +225,55 @@ if __name__ == '__main__':
     #cur_avg = sum(tiltBuffer,0.0) / bufferSize
     updateTilt()
     old_tilt = tilt
+    zeroTilt = tilt
     #print("Average Tilt:", cur_avg)
     # start in one direction find max val
     print("Finding min tilt")
+    now = time.time()
     motor.startForward()
-    time.sleep(2) #wait 1 second
+    time.sleep(1.5)
     updateTilt()
-    while(abs(tilt - old_tilt) > calibrationTolerance):
+    while(abs(tilt - old_tilt) > calibrationTolerance or (time.time() - now) > 10):
         # print('old tilt:', old_tilt)
-        # print('tilt:', tilt)
+        print('tilt:', tilt)
         old_tilt = tilt
         time.sleep(1)
         updateTilt()
     motor.stop()
     tiltMin = tilt
     print("tilt min:", tiltMin)
-    old_tilt = tilt
+   # old_tilt = tilt
     #start in opposite direction
-    print("Finding max tilt")
+#    print("Finding max tilt")
     #print(old_tilt, tilt)
-    motor.startReverse()
-    print('starting reverse')
-    time.sleep(5) #wait 1 second
-    updateTilt()
-    print(old_tilt, tilt)
-    while(abs(tilt - old_tilt) > calibrationTolerance):
+   # motor.startReverse()
+   # print('starting reverse')
+ #   now = time.time()
+  #  motor.startReverse()
+   # time.sleep(3) #wait 1 second
+   # updateTilt()
+    #print(old_tilt, tilt)
+   # while(abs(tilt - old_tilt) > calibrationTolerance or ((time.time() - now) > 12)):
         # print('old tilt:', old_tilt)
-        # print('tilt:', tilt)
-        old_tilt = tilt
-        time.sleep(1)
-        updateTilt()
-    motor.stop()
-    tiltMax = tilt
-
-    setBlindTilt(50)
-    print("tilt max:", tiltMax)
+    #    print('tilt:', tilt)
+     #   old_tilt = tilt
+      #  time.sleep(1)
+       # updateTilt()
+   # motor.stop()
+   # tiltMax = tilt
+    #setBlindTilt(50)
+   # print("tilt max:", tiltMax)
     print("Motor Calibration Finished.")
-    time.sleep(10000)
+    print("Zero Tilt" + str(zeroTilt))
+    print('trying to set halfway')
+   # setBlindTilt(50)
+
+   # while True:
+   #     openBlind()
+   #     closeBlind()
+
+
+
+   # time.sleep(10000)
 
     app.run(debug=True, port=80, host='0.0.0.0')

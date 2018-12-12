@@ -67,8 +67,10 @@ class IMU:
         print("IMU Calibrated.")
 
     def getAccelVals(self):
-        if(self.lib.lsm9ds1_gyroAvailable(self.imu) == 0):
-            return False
+        if(self.lib.lsm9ds1_accelAvailable(self.imu) == 0):
+           if(self.lib.lsm9ds1_accelAvailable(self.imu) == 0):
+              if(self.lib.lsm9ds1_accelAvailable(self.imu) == 0):
+                 return False
         else:
             self.lib.lsm9ds1_readAccel(self.imu)
             ax = self.lib.lsm9ds1_getAccelX(self.imu)
