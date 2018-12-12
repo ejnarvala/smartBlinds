@@ -112,9 +112,8 @@ function updateVals(data){
 	closeTimeDOM.innerHTML = data.closeTime;
 	if(data.isOpen){
 		statusDOM.innerHTML = 'Blinds Opened';
-	}
-	if(data.isClosed){
-		statusDOM.innerHTML = ' Blinds Closed';
+	}else{
+		statusDOM.innerHTML = 'Blinds Closed';
 	}
 
 }
