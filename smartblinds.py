@@ -46,21 +46,22 @@ def updateLight():
 
 #spins the motor until blinds are at the provided percent
 def setBlindTilt(percentTilt):
-    delta = tiltTolerance + 1
+    tiltRange = abs(tiltMax - tiltMin)
+    tiltTarget = (percentTilt/100.0)*tiltRange + tiltMin
     updateTilt()
+    old_tilt = tilt
     busy = True
-    if(percentTilt < tilt):
+    if(tiltTarget < tilt):
         motor.startForward()
     else:
         motor.startReverse()
-
-    avgTilt = tilt
-    while(delta > tiltTolerance):
+    time.sleep(0.25)
+    updateTilt()
+    while(abs(tilt - tiltTarget) > tiltTolerance):
+        time.sleep(.1)
         updateTilt()
-        tiltBuffer.append(tilt)
-        avgTilt = sum(tiltBuffer, 0.0) / bufferSize
-        delta = percentTilt - avgTilt #stop once average Tilt and desired tilt are within tolerecne
     motor.stop()
+
     busy = False
 
 
@@ -135,48 +136,37 @@ if __name__ == '__main__':
     old_tilt = tilt
     #print("Average Tilt:", cur_avg)
     # start in one direction find max val
-    print("Finding max tilt")
+    print("Finding min tilt")
     motor.startForward()
-    #now = time.time()
-    #while(time.time() - now < 3):
-    #    updateTilt()
-    #    print('tilt:',tilt)
-    #motor.stop()
-    #time.sleep(100)
-    # Add a timeout
     time.sleep(1) #wait 1 second
     updateTilt()
     while(abs(tilt - old_tilt) > calibrationTolerance):
-        print('old tilt:', old_tilt)
-        print('tilt:', tilt)
+        # print('old tilt:', old_tilt)
+        # print('tilt:', tilt)
         old_tilt = tilt
-
-        #tiltBuffer.append(tilt)
-        #old_avg = cur_avg
-        #cur_avg = sum(tiltBuffer, 0.0) / bufferSize
-        #print('avg:',cur_avg)
-        #delta = abs(cur_avg - old_avg)
         time.sleep(1)
         updateTilt()
     motor.stop()
-
-    tiltMax = tilt
-    print("tilt max:", tiltMax)
-    time.sleep(1000)
+    tiltMin = tilt
+    print("tilt min:", tiltMin)
 
     #start in opposite direction
     print("Finding min tilt")
     motor.startReverse()
-    while(delta > calibrationTolerance):
+    time.sleep(1) #wait 1 second
+    updateTilt()
+    while(abs(tilt - old_tilt) > calibrationTolerance):
+        # print('old tilt:', old_tilt)
+        # print('tilt:', tilt)
+        old_tilt = tilt
+        time.sleep(1)
         updateTilt()
-        tiltBuffer.append(tilt)
-        old_avg = cur_avg
-        cur_avg = sum(tiltBuffer, 0.0) / bufferSize
-        delta = abs(cur_avg - old_avg)
     motor.stop()
+    tiltMax = tilt
 
-    tiltMin = cur_avg
-    print("tilt min:", tiltMin)
+    setBlindTilt(50)
+    print("tilt max:", tiltMax)
     print("Motor Calibration Finished.")
+    time.sleep(10000)
 
     app.run(debug=True, port=80, host='0.0.0.0')
