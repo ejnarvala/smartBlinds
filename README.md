@@ -52,7 +52,7 @@ This command will start the program which begins with instantiation of custom mo
 
 
 ![gui](/images/gui.png)
-GUI screenshot after initialization
+GUI screenshot 
 
 
 ### Demo Video
