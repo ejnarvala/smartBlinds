@@ -51,11 +51,11 @@ sudo python3 smartblinds.py
 This command will start the program which begins with instantiation of custom motor, IMU, and photoresistor classes. These were created using RPi.GPIO and an I2C IMU library. The IMU is first calibrated by first closing the blind until the IMU stops changing in value (meaning the blind is no longer turning) in order to establish the readings that correspond to the blind being open or closed. The server is then instantiated and the GUI can be accessed using the IP address of the Pi
 
 
-![gui](/images/gui.png)
+[gui](/images/gui.png)
 GUI screenshot 
 
 
 ### Demo Video
 
-![Demonstration Link](https://youtu.be/hkg0LA-H65w)
+[Demonstration Link](https://youtu.be/hkg0LA-H65w)
 
