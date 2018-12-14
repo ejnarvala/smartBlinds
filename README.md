@@ -27,7 +27,12 @@ These were the main parts that were used in the project:
 |VDD|3.3V|
 |GND|GND|
 |SDA|2|
-|SCL|3|
+|SCL|3|  
+
+|Photoresistor|Connection|
+|----|----|
+|Lead 1|Series with 1uF capacitor and 18|
+|Lead 2|3.3V|  
 
 |H Bridge|Connection|
 |----|----|
@@ -39,7 +44,18 @@ These were the main parts that were used in the project:
 |AIN2|19|
 |STBY|13|
 |AO1|Motor lead +|
-|AO2|Motor lead -|
+|AO2|Motor lead -|  
+
+
+
+
+
+### Project Setup
+
+![gui](/images/setup.png)  
+Setup with motor (blue), H bridge (red), photoresistor (yellow) and IMU (green)
+
+
 
 ### Running the Code
 
@@ -51,9 +67,19 @@ sudo python3 smartblinds.py
 This command will start the program which begins with instantiation of custom motor, IMU, and photoresistor classes. These were created using RPi.GPIO and an I2C IMU library. The IMU is first calibrated by first closing the blind until the IMU stops changing in value (meaning the blind is no longer turning) in order to establish the readings that correspond to the blind being open or closed. The server is then instantiated and the GUI can be accessed using the IP address of the Pi
 
 
-![gui](/images/gui.png)
+![gui](/images/gui.png)  
+GUI screenshot
  
 ### Demo Video
 
 [Demonstration Link](https://youtu.be/hkg0LA-H65w)
+
+### Future Work
+
+* Better IMU configuration
+    * Running average to smooth readings
+    * Better mounting for stability
+* Implement a more accurate and stable ambient light reading system
+    * Use this to control blinds
+* Add manual/granular tilting of the blinds
 
